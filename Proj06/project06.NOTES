@@ -1,0 +1,255 @@
+
+Notes on Computer Project #6
+----------------------------
+
+Comments about the assignment and responses to frequently asked questions will
+be added to this file as necessary.
+
+***** comments added on 10/05/17 *****
+
+1) Please note the following statement from the assignment handout:
+
+  The deliverables for this assignment are:
+
+    proj06.makefile  -- the makefile which produces "proj06"
+    proj06.support.c -- the source code for your library module
+    proj06.driver.c  -- the source code for your driver module
+
+  Be sure to use the specified file names, and to submit your files for
+  grading via the "handin" program.
+
+It is possible to submit your solution files multiple times:  the last files
+that you submit will be graded.
+
+2) Please note that you are required to create a makefile which controls the
+translation of your program, and that the name of your executable file must be
+"proj06".
+
+3) For your convenience, I have supplied the following file:
+
+  ~cse320/Projects/project06.support.h
+
+That file contains the declaration of function "mult", as well as the
+declaration of "union sp_union".
+
+Since that file may not be modified, there is no reason to copy it into your
+account.  Instead, use its absolute pathname in the appropriate preprocessor
+directive.  For example:
+
+  #include "/user/cse320/Projects/project06.support.h"
+
+Any program which uses those functions should contain the appropriate
+preprocessor directive.
+
+4) Consider the following example (an extension of the example on the
+handout):
+
+  #include <stdio.h>
+
+  union sp_union
+  {
+    float frep;
+    unsigned irep;
+  };
+
+  int main()
+  {
+    union sp_union num;
+    signed true_exp;
+
+    num.frep = 24.5;
+
+    printf( "Real: %f  Hex integer: %08x  ", num.frep, num.irep );
+
+    true_exp = ((num.irep >> 23) & 0xff) - 0x7f;
+
+    printf( "True exponent: %d \n\n", true_exp );
+  }
+
+When compiled and executed, that program produces the following:
+
+  Real: 24.500000  Hex integer: 41c40000  True exponent: 4 
+
+Note that shifting and masking (as well as other integer operations) will be
+quite useful.
+
+5) Please note that it is perfectly acceptable to use data objects of type
+"union sp_union" in your driver module.  Using that approach, you can create
+test cases which have specific bit patterns by assigning hexadecimal constants
+to the "irep" version of an object.  The "frep" version of that object can
+then be passed as an argument to one or more of the functions in your support
+module.
+
+6) Please note the following statements from the assignment handout:
+
+  Function "mult" (and any associated "helper" functions which you develop)
+  will constitute the library module.  The functions in that library module
+  will not call any C library functions, and they will not use any floating
+  point operations.  There is one exception: the functions may use the
+  assignment operation to copy a floating point value from one variable to
+  another.
+
+You may use the floating point assignment operation to copy an object of type
+"float", but no other floating point operations.
+
+You may wish to use "printf" to display intermediate results as you develop
+your support module, but be sure to remove those calls (or turn them into
+comments) before submitting your work.
+
+Alternatively, you can use "gdb" to display intermediate results.
+
+7) Be sure to think carefully about the special cases that can arise, such as
+the exponent which represents Infinity (and NaN) and the exponent which
+represents zero (and denormal values).
+
+Please note the following statements from the assignment handout:
+
+  Arguments which are denormal will be processed as the value zero.
+
+  If either argument is the floating point value "not-a-number", function
+  "mult" will return that value.  Otherwise, if either argument is the floating
+  point value "infinity", function "mult" will return that value.
+
+The IEEE standard specifies all special cases (for example, Infinity divided
+by Infinity is Not-a-Number).  However, for the purposes of this assignment,
+you may use the simpler rules listed above.
+
+8) Please note that multiplying two 24-bit integer values may produce a 48-bit
+result.  Since 48 bits will not fit into a 32-bit memory cell, you'll need
+some strategy to handle the product.
+
+One approach would be to reduce the number of bits in the 24-bit operands, so
+that the product does fit into 32 bits.  The drawback to that approach is a
+potential loss of precision (significant bits in the operands might be
+discarded).
+
+Another approach would be to use type "unsigned long long" (64 bits wide) to
+hold the product, then extract the relevant 24 bits.  An example program which
+uses 64-bit integers is available as "project06.longlong.c".
+
+9) If you are multiplying two 24-bit significands to produce a 48-bit product,
+be careful about the type rules of C/C++.
+
+Consider the following code segment:
+
+  unsigned long A = 0x00940000;
+  unsigned long B = 0x00c80000;
+  unsigned long long Result;
+
+  Result = A * B;
+  printf( "Result:  %016llx\n", Result );
+
+The output it displays is probably not what you were expecting:
+
+  Result:  0000000000000000
+
+Remember that "Result = A * B" contains two separate operations (multiplication
+and assignment), and that the type of an expression is based on the types
+of the operands.  That is, "A * B" produces a value of type "unsigned long",
+which is only 32 bits wide.  Then, the assignment promotes that value of type
+"unsigned long" to a value of type "unsigned long long" (using sign extension).
+
+Internally, the machine computed a 64-bit product (since the two operands were
+32 bits wide).  The type rules for C/C++ made the compiler save the lower 32
+bits as the value of that expression.  That's exactly what you want when the
+operands are small enough.  However, that's probably not what you want for this
+project.
+
+You can solve this problem in a couple of ways, both of which involve promoting
+the two operands to type "unsigned long long" before doing the multiplication.
+For example:
+
+  Result = (unsigned long long ) A * (unsigned long long ) B;
+  printf( "Result:  %016llx\n", Result );
+
+  unsigned long long AA = A;
+  unsigned long long BB = B;
+
+  Result = AA * BB;
+  printf( "Result:  %016llx\n", Result );
+
+The output produced by those two approaches is the same:
+
+  Result:  000073a000000000
+  Result:  000073a000000000
+
+The moral of the story:  be aware of expression types and implicit type
+conversions!
+
+10) It may be useful to work some multiplication examples by hand in order to
+clarify your thinking.  Consider the six-bit floating point format discussed in
+Example #11 and the following examples.
+
+a) Multiplying 1.5 by 2.0 produces 3.0:
+
+  1.5    1100 exp 0
+  2.0    1000 exp 1
+         ----
+         0000
+        0000
+       0000
+      1100
+     --------
+     01100000 exp 1
+
+  Note that the implied binary point is followed by 6 bits:
+
+     01.100000 exp 1
+
+  The result is already normalized; the fraction field is "100" and the final
+  result is 010100 (3.0).
+
+b) Multiplying 1.5 by 1.5 produces 2.25:
+
+  1.5    1100 exp 0
+  1.5    1100 exp 0
+         ----
+         0000
+        0000
+       1100
+      1100
+     --------
+     10010000 exp 0
+
+  The result must be re-normalized so that the most significant one is
+  immediately to the left of the implied binary point:
+
+     01001000 exp 1
+
+  The fraction field is "001" and the final result is 010001 (2.25).
+
+c) Multiplying 1.5 by 1.375 produces 2.0625, which cannot be represented
+exactly:
+
+  1.5    1100 exp 0
+  1.375  1011 exp 0
+         ----
+         1100
+        1100
+       0000
+      1100
+     --------
+     10000100 exp 0
+
+  The result must be re-normalized:
+
+     01000010 exp 1
+
+  The fraction field is "000" and the final result is 010000 (2.0).
+
+The same general themes are present with 32-bit single precision floating
+point values -- the biased exponent and fraction fields are just wider.
+
+11) I have posted an example program that illustrates how to pass an object of
+type "float" to a function, and then copy that argument to an object of type
+"union sp_union":
+
+  ~cse320/Projects/project06.view.c
+
+Note that the function simply displays the object of type "union sp_union"
+using both "%f" and %08x".  However, the object could be manipulated as an
+unsigned integer value inside the function (using arithmetic, bitwise and shift
+operations).
+
+--M. McCullen
+
