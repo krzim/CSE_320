@@ -1,0 +1,38 @@
+ARM GAS  tests.s 			page 1
+
+
+   1              	label:
+   2 0000 0AFFFFFE 			beq		label
+   3 0004 1AFFFFFD 			bne		label
+   4 0008 2AFFFFFC 			bcs		label
+   5 000c 3AFFFFFB 			bcc		label
+   6 0010 4AFFFFFA 			bmi		label
+   7 0014 5AFFFFF9 			bpl		label
+   8 0018 6AFFFFF8 			bvs		label
+   9 001c 7AFFFFF7 			bvc		label
+  10 0020 8AFFFFF6 			bhi		label
+  11 0024 9AFFFFF5 			bls		label
+  12 0028 AAFFFFF4 			bge		label
+  13 002c BAFFFFF3 			blt		label
+  14 0030 CAFFFFF2 			bgt		label
+  15 0034 DAFFFFF1 			ble		label
+  16 0038 EAFFFFF0 			b		label
+  17 003c EA000001 			b		ahead
+  18 0040 EA000003 			b		far
+  19 0044 E0800001 			add		r0, r1
+  20              	ahead:
+  21 0048 E5910000 			ldr		r0, [r1]
+  22 004c E1A00001 			mov		r0, r1
+  23 0050 01A00001 			moveq	r0, r1
+  24              	far:
+  25 0054 05910000 			ldreq	r0, [r1]
+ARM GAS  tests.s 			page 2
+
+
+DEFINED SYMBOLS
+             tests.s:1      .text:00000000 label
+             tests.s:2      .text:00000000 $a
+             tests.s:20     .text:00000048 ahead
+             tests.s:24     .text:00000054 far
+
+NO UNDEFINED SYMBOLS
